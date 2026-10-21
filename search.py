@@ -37,17 +37,17 @@ STOPWORDS = {
 GARMENT_NOUNS = {
     'dress', 'top', 'shirt', 't-shirt', 'tshirt', 'tee', 'jeans', 'skirt',
     'trousers', 'pants', 'pant', 'chinos', 'chino', 'sweatpants', 'sweatpant', 'joggers', 'jogger',
-    'jacket', 'coat', 'blazer', 'sweater', 'hoodie', 'pullover', 'cardigan',
-    'shoes', 'shoe', 'sneakers', 'sneaker', 'boots', 'boot', 'sandals', 'sandal',
+    'jacket', 'coat', 'blazer', 'sweater', 'hoodie', 'pullover', 'cardigan', 'sweatshirt',
+    'shoes', 'shoe', 'sneakers', 'sneaker', 'trainers', 'trainer', 'boots', 'boot', 'sandals', 'sandal',
     'bag', 'handbag', 'backpack', 'tote', 'clutch', 'shorts', 'suit', 'vest', 'dungarees',
     'jumpsuit', 'playsuit', 'swimsuit', 'bikini', 'swimwear', 'pyjama',
     'pyjamas', 'nightwear', 'leggings', 'bra', 'briefs', 'socks', 'belt',
     'scarf', 'hat', 'cap', 'sunglasses', 'necklace', 'earrings', 'jewellery',
-    'watch', 'gloves', 'umbrella'
+    'watch', 'gloves', 'umbrella', 'polo', 'slacks'
 }
 
 OCCASIONS = {
-    'wedding': ['formal', 'party', 'cocktail', 'elegant', 'smart', 'guest', 'ceremony', 'traditional', 'ethnic', 'suit', 'dress', 'blazer', 'gown'],
+    'wedding': ['formal', 'party', 'cocktail', 'elegant', 'smart', 'guest', 'ceremony', 'traditional', 'ethnic', 'suit', 'blazer', 'gown'],
     'guest': ['wedding', 'party', 'formal', 'cocktail', 'dress', 'suit', 'smart', 'blazer'],
     'dinner': ['evening', 'party', 'dressy', 'formal', 'black', 'cocktail', 'night', 'smart', 'dress', 'blazer'],
     'party': ['evening', 'cocktail', 'celebration', 'glitter', 'sparkle', 'night', 'dress'],
@@ -74,7 +74,7 @@ OCCASIONS = {
     'grunge': ['denim', 'jacket', 'boots', 'shirt', 'flannel', 'check', 'distressed', 'vintage'],
     'rock': ['denim', 'jacket', 'boots', 'shirt', 'black', 'leather', 'graphic', 'vintage'],
     'office': ['formal', 'work', 'blazer', 'trousers', 'shirt', 'smart', 'suit'],
-    'formal': ['smart', 'office', 'blazer', 'suit', 'trousers', 'tie', 'dress'],
+    'formal': ['smart', 'office', 'blazer', 'suit', 'tie', 'elegant'],
     'casual': ['basics', 'everyday', 'denim', 'jersey', 'relaxed', 't-shirt'],
 }
 
@@ -84,24 +84,29 @@ SYNONYMS = {
     'outfit': ['clothing', 'suit', 'garment', 'dress', 'swimwear'],
     'garments': ['clothing', 'outfit', 'apparel'],
     'clothes': ['clothing', 'outfit', 'garment'],
-    'pants': ['trousers', 'jeans', 'chinos', 'slacks', 'sweatpants'],
-    'trousers': ['pants', 'chinos', 'slacks', 'sweatpants'],
+    'pants': ['trousers', 'chinos', 'slacks'],
+    'trousers': ['pants', 'chinos', 'slacks'],
     'chinos': ['trousers', 'pants'],
     'chino': ['trousers', 'pants'],
     'sweatpants': ['trousers', 'pants', 'joggers'],
     'sweatpant': ['trousers', 'pants', 'jogger'],
     'joggers': ['trousers', 'pants', 'sweatpants'],
     'jogger': ['trousers', 'pants', 'sweatpant'],
-    'jeans': ['denim', 'pants', 'trousers'],
+    'jeans': ['denim'],
+    'denim': ['jeans'],
     'sneakers': ['shoes', 'trainers'],
+    'sneaker': ['shoes', 'trainer'],
     'trainers': ['sneakers', 'shoes'],
-    'shoes': ['footwear', 'sneakers', 'boots', 'sandals', 'ballerinas', 'pumps'],
+    'trainer': ['sneakers', 'shoes', 'sneaker', 'shoe'],
+    'shoes': ['footwear', 'sneakers', 'boots', 'sandals', 'ballerinas', 'pumps', 'trainers'],
     'hoodie': ['sweatshirt', 'sweater', 'jumper', 'pullover'],
     'pullover': ['hoodie', 'sweater', 'sweatshirt', 'jumper'],
     'sweater': ['pullover', 'jumper', 'cardigan', 'knitwear'],
+    'sweatshirt': ['hoodie', 'sweater', 'pullover'],
     'top': ['shirt', 'blouse', 't-shirt', 'vest top'],
     'tee': ['t-shirt', 'top'],
     'tshirt': ['t-shirt', 'top'],
+    'polo': ['shirt', 't-shirt', 'top'],
     'dress': ['gown', 'frock'],
     'blazer': ['jacket', 'suit'],
     'jacket': ['blazer', 'coat', 'outerwear', 'windbreaker'],
@@ -113,7 +118,8 @@ SYNONYMS = {
     'cap': ['hat'],
     'hat': ['cap', 'beanie'],
     'nightwear': ['pyjama', 'pyjamas', 'sleepwear', 'night gown'],
-    'swimwear': ['swimsuit', 'bikini', 'swimming trunks']
+    'swimwear': ['swimsuit', 'bikini', 'swimming trunks'],
+    'slacks': ['trousers', 'pants']
 }
 
 OFF_TOPIC_KEYWORDS = {
@@ -123,7 +129,13 @@ OFF_TOPIC_KEYWORDS = {
     'airplane', 'flight', 'ticket', 'hotel', 'medicine', 'antibiotics', 'pharma',
     'prescription', 'drug', 'food', 'groceries', 'pizza', 'burger', 'vegetable',
     'meat', 'furniture', 'sofa', 'refrigerator', 'microwave', 'plumbing', 'wrench',
-    'investment', 'crypto', 'bitcoin', 'coin'
+    'investment', 'crypto', 'bitcoin', 'coin', 'milk', 'cheese', 'butter', 'bread',
+    'coffee', 'tea', 'snack', 'snacks', 'fruit', 'fruits', 'apple', 'banana', 'supermarket',
+    'recipe', 'restaurant', 'table', 'chair', 'bed', 'mattress', 'desk', 'television',
+    'tv', 'speaker', 'headphones', 'earphones', 'earbuds', 'hospital', 'doctor', 'nurse',
+    'pharmacy', 'pill', 'pills', 'vaccine', 'dentist', 'cryptocurrency', 'ethereum',
+    'stocks', 'shares', 'insurance', 'loan', 'credit', 'mortgage', 'apartment', 'villa',
+    'house', 'puppy', 'kitten', 'dog', 'cat', 'aquarium', 'motorcycle', 'scooter'
 }
 
 COMPLEMENT_PATTERNS = [
@@ -306,10 +318,10 @@ class Catalog:
                     st = stem_token(m)
                     if st != m:
                         refined.update(garment_pids & self.token_to_pids.get(st, set()))
-                    for occ in OCCASIONS.get(m, ()) + OCCASIONS.get(st, ()):
+                    for occ in OCCASIONS.get(m, []) + OCCASIONS.get(st, []):
                         for on in tokens(occ):
                             refined.update(garment_pids & self.token_to_pids.get(on, set()))
-                    for syn in SYNONYMS.get(m, ()) + SYNONYMS.get(st, ()):
+                    for syn in SYNONYMS.get(m, []) + SYNONYMS.get(st, []):
                         for sn in tokens(syn):
                             refined.update(garment_pids & self.token_to_pids.get(sn, set()))
 
@@ -326,10 +338,10 @@ class Catalog:
             for t in content:
                 st = stem_token(t)
                 tok_pids = set(self.token_to_pids.get(t, ())) | set(self.token_to_pids.get(st, ()))
-                for occ in OCCASIONS.get(t, ()) + OCCASIONS.get(st, ()):
+                for occ in OCCASIONS.get(t, []) + OCCASIONS.get(st, []):
                     for on in tokens(occ):
                         tok_pids.update(self.token_to_pids.get(on, ()))
-                for syn in SYNONYMS.get(t, ()) + SYNONYMS.get(st, ()):
+                for syn in SYNONYMS.get(t, []) + SYNONYMS.get(st, []):
                     for sn in tokens(syn):
                         tok_pids.update(self.token_to_pids.get(sn, ()))
                 for pid in tok_pids:
@@ -388,6 +400,18 @@ class Catalog:
             # but this product is a different garment, reject it!
             if not product_has_requested_garment:
                 return 0.0
+
+            # Reject sweatpants/joggers/chinos when jeans or denim was specifically requested
+            if any(gn in ('jeans', 'denim') for gn in query_garment_nouns):
+                name_l = str(product.get('name') or '').lower()
+                if any(w in name_l for w in ('sweatpants', 'jogger', 'chino', 'cargo')) and 'jeans' not in name_l and 'denim' not in words:
+                    return 0.0
+
+            # Reject socks or hats when sneakers/trainers/shoes requested
+            if any(gn in ('sneakers', 'sneaker', 'trainers', 'trainer') for gn in query_garment_nouns):
+                ptype_l = str(product.get('product_type') or '').lower()
+                if ptype_l in ('socks', 'hat/beanie', 'bra', 'briefs'):
+                    return 0.0
 
         matched_terms = 0
         score = 0.0
@@ -472,13 +496,43 @@ class Catalog:
             if 'band' in ptype_l or str(product.get('category') or '') == 'Accessories':
                 score *= 0.1
 
-        # FIX C: Deprioritize obvious costumes and fancy-dress products for formal occasions
-        if any(t in query_tokens for t in ('wedding', 'formal', 'business', 'funeral', 'mourning', 'office', 'cocktail')):
-            ptype_l = str(product.get('product_type') or '').lower()
-            name_l = str(product.get('name') or '').lower()
-            desc_l = str(product.get('description') or '').lower()
-            if ptype_l == 'costumes' or 'fancy dress' in name_l or 'fancy dress' in desc_l or name_l.startswith('dress up '):
+        # FIX D: Audience and gender matching
+        is_men = any(t in query_tokens for t in ('men', 'mens', 'man', 'male', 'gentlemen'))
+        is_women = any(t in query_tokens for t in ('women', 'womens', 'woman', 'ladies', 'female'))
+        is_kids = any(t in query_tokens for t in ('kids', 'children', 'child', 'boys', 'boy', 'girls', 'girl'))
+        is_baby = any(t in query_tokens for t in ('baby', 'infant', 'toddler', 'newborn'))
+
+        aud_str = str(product.get('audience') or '').lower()
+        sec_str = str(product.get('section') or '').lower()
+
+        if is_men:
+            if 'men' in aud_str or 'men' in sec_str:
+                score += 4.0
+            elif any(k in aud_str for k in ('ladies', 'baby', 'children', 'lingerie')):
                 score *= 0.1
+        elif is_women:
+            if 'ladies' in aud_str or 'women' in sec_str or 'divided' in aud_str or 'lingerie' in aud_str:
+                score += 4.0
+            elif 'men' in aud_str or 'men' in sec_str:
+                score *= 0.1
+        elif is_kids:
+            if 'children' in aud_str or 'young' in sec_str:
+                score += 4.0
+            elif 'men' in aud_str or 'ladies' in aud_str:
+                score *= 0.1
+        elif is_baby:
+            if 'baby' in aud_str:
+                score += 5.0
+            elif 'men' in aud_str or 'ladies' in aud_str:
+                score *= 0.1
+
+        # FIX E: Contradiction penalties for formal occasions
+        if any(t in query_tokens for t in ('formal', 'office', 'business', 'suit', 'smart')):
+            name_lower = str(product.get('name') or '').lower()
+            if any(c in name_lower for c in ('relaxed', 'casual', 'beach', 'lounge', 'sweat', 'jogger', 'distressed')):
+                score *= 0.2
+            if any(c in name_lower for c in ('suit', 'smart', 'tailored', 'blazer', 'formal', 'classic')):
+                score += 3.0
 
         return score
 
