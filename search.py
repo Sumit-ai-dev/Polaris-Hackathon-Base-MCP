@@ -86,11 +86,19 @@ NEUTRAL = {'Black', 'White', 'Off White', 'Beige', 'Light Beige', 'Dark Beige', 
 UNSATISFIABLE_BRANDS = {
     'nike', 'adidas', 'puma', 'reebok', 'gucci', 'prada', 'zara', 'levis', 'levi',
     'uniqlo', 'chanel', 'dior', 'versace', 'armani', 'calvin', 'klein', 'tommy',
-    'hilfiger', 'lacoste', 'converse', 'vans', 'birkenstock', 'crocs', 'apple', 'samsung', 'iphone'
+    'hilfiger', 'lacoste', 'converse', 'vans', 'birkenstock', 'crocs', 'apple', 'samsung', 'iphone',
+    'disney', 'lululemon', 'shein', 'abercrombie', 'hollister', 'superdry'
 }
 
 NON_SHOPPING_RE = re.compile(
     r'^(?:how\s+(?:do|to|can|should|does)|why\b|write\b|translate\b|explain\b|tell\s+me\s+about|who\s+is|what\s+is)',
+    re.I
+)
+
+IMPERATIVE_RE = re.compile(
+    r'^\s*(?:calculate|compute|write|code|program|explain|translate|summari[sz]e|define|solve|'
+    r'repair|fix|install|debug|convert|generate|draw|sing|play|cook|bake|book|reserve|'
+    r'schedule|predict|measure|compare prices of|tell me)\b',
     re.I
 )
 
@@ -175,6 +183,7 @@ class Catalog:
         # Colour variants share the first 7 ID digits (article code) and usually the name.
         self.family_code = [pid[:7] for pid in self.ids]
         self.name_key = [re.sub(r'[^a-z]', '', p['name'].casefold()) for p in P]
+        self.weak_name = np.array([len(k) < 3 for k in self.name_key], dtype=bool)
         self.type_list = sorted(set(self.type_arr))
         self.color_list = sorted(set(self.color_arr))
         self._build_audience()
@@ -298,7 +307,7 @@ class Catalog:
         for x in {w, qp.stem(w)}:
             for d in [x] + [x[:j] + x[j + 1:] for j in range(len(x))]:
                 cands.update(self._deletes.get(d, []))
-        return {c for c in cands if c != w and (_edit1(w, c) or _edit1(qp.stem(w), c) or _edit1(w, qp.stem(c)))}
+        return {c for c in cands if c != w and (len(w) >= 6 or c[0] == w[0]) and (_edit1(w, c) or _edit1(qp.stem(w), c) or _edit1(w, qp.stem(c)))}
 
     def _best_candidate(self, w):
         cands = self._typo_candidates(w)
@@ -479,6 +488,7 @@ class Catalog:
         if 'guest' in qwords and 'wedding' in qwords:
             is_bridal = np.array(['bridal' in self.name_key[i] or 'bride' in self.name_key[i] for i in idx])
             score = np.where(is_bridal, score * 0.1 - 1.0, score)
+        score = score - 0.3 * self.weak_name[idx]
         # Gentle quality prior so ties prefer well-reviewed items.
         score = score + 0.001 * np.where(self.rating_null[idx], 3.0, self.rating[idx]) / 5
         order = np.lexsort((idx, -np.round(score, 3)))
@@ -739,7 +749,7 @@ class Catalog:
         if query:
             q_lower = query.lower()
             q_tokens = set(re.findall(r'[a-z0-9]+', q_lower))
-            if NON_SHOPPING_RE.search(query) or LOOKALIKE_OFFTOPIC_RE.search(query) or qp.INJECTION_RE.search(q_lower):
+            if NON_SHOPPING_RE.search(query) or LOOKALIKE_OFFTOPIC_RE.search(query) or IMPERATIVE_RE.search(query) or qp.INJECTION_RE.search(q_lower):
                 return {'results': [], 'recommendations': []}
             if any(w in ETHNIC_WEAR for w in q_tokens):
                 return {'results': [], 'recommendations': []}

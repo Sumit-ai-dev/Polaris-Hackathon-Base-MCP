@@ -60,6 +60,8 @@ TYPE_WORDS = {
     'cami': ['Vest top'], 'camisole': ['Vest top'],
     'blouse': ['Blouse'], 'tunic': ['Blouse', 'Dress'],
     'jacket': ['Jacket', 'Blazer'], 'coat': ['Coat', 'Jacket'], 'parka': ['Jacket', 'Coat'], 'puffer': ['Jacket'],
+    'layer': ['Cardigan', 'Jacket', 'Blazer', 'Outdoor Waistcoat', 'Sweater'],
+    'layering': ['Cardigan', 'Jacket', 'Blazer', 'Outdoor Waistcoat', 'Sweater'],
     'windbreaker': ['Jacket'], 'raincoat': ['Jacket', 'Coat'], 'trench': ['Coat'], 'bomber': ['Jacket'],
     'gilet': ['Outdoor Waistcoat'], 'waistcoat': ['Tailored Waistcoat', 'Outdoor Waistcoat'],
     'short': ['Shorts'], 'shirt': ['Shirt'], 'flannel': ['Shirt'], 'polo': ['Polo shirt'],
@@ -152,6 +154,9 @@ IRRELEVANT_WORDS = {
     'whisky', 'rice', 'basmati', 'flour', 'sugar', 'oil', 'kg', 'cigarette', 'vape', 'gun', 'weapon', 'drug', 'pet food', 'cat food', 'fertilizer', 'seed', 'plant',
     'flight', 'flights', 'refrigerator', 'fridge', 'airline', 'couch', 'lamp',
     'kurta', 'saree', 'sari', 'lehenga', 'sherwani', 'dhoti', 'salwar', 'dupatta',
+    'cryptocurrency', 'mining', 'apartment', 'villa', 'condo', 'rent', 'superconductor',
+    'photosynthesis', 'chlorophyll', 'volcanology', 'seismograph', 'algorithm', 'semiconductor',
+    'microchip', 'thruster', 'magnetic', 'coil',
 }
 
 STOP = set('''a an the and or of for to in on with without me my i im i'm we our you your want need looking look find
@@ -309,11 +314,11 @@ def _segments(text):
             if bt and at and (TRAILING_COMP_RE.search(after) or (w.group(0).startswith('with')
                                                                   and set(at) <= ACCESSORY_TYPES)):
                 comp = re.sub(TRAILING_COMP_RE, ' ', text[w.end():])
-                parts = [p for p in re.split(r'\s*(?:,|;|\band\b|&|\bplus\b)\s*', comp) if p.strip()]
+                parts = [p for p in re.split(r'\s*(?:(?<!\d),(?!\d)|;|\band\b|&|\bplus\b)\s*', comp) if p.strip()]
                 return [text[:w.start()]], ([p for p in parts if find_types(p)[0]] or [comp])
     m = COMPLEMENT_RE.search(low)
     primary, complement = (text[:m.start()], text[m.end():]) if m else (text, '')
-    parts = [p for p in re.split(r'\s*(?:,|;|\band\b|\bor\b|&|\bplus\b|\balong with\b|/)\s*', primary) if p.strip()]
+    parts = [p for p in re.split(r'\s*(?:(?<!\d),(?!\d)|;|\band\b|\bor\b|&|\bplus\b|\balong with\b|/)\s*', primary) if p.strip()]
     # Merge parts without a product-type word into their neighbour ("black and white striped shirt").
     merged = []
     for part in parts:
@@ -323,7 +328,7 @@ def _segments(text):
             merged[-1] += ' ' + part
         else:
             merged.append(part)
-    comps = [p for p in re.split(r'\s*(?:,|;|\band\b|&|\bplus\b)\s*', complement) if p.strip()]
+    comps = [p for p in re.split(r'\s*(?:(?<!\d),(?!\d)|;|\band\b|&|\bplus\b)\s*', complement) if p.strip()]
     comps_merged = []
     for part in comps:
         if comps_merged and not find_types(part)[0]:
@@ -333,9 +338,30 @@ def _segments(text):
     return merged or [primary], comps_merged
 
 
+CONTEXT_GARMENT_RE = re.compile(
+    r'\b(?:to wear |to go |to put )?(?:over|on top of|under|underneath|beneath)\s+(?:my\s+|a\s+|an\s+)?([a-z]+)\b',
+    re.I
+)
+
+IMPERATIVE_RE = re.compile(
+    r'^\s*(?:calculate|compute|write|code|program|explain|translate|summari[sz]e|define|solve|'
+    r'repair|fix|install|debug|convert|generate|draw|sing|play|cook|bake|book|reserve|'
+    r'schedule|predict|measure|compare prices of|tell me)\b',
+    re.I
+)
+
+
 def _spec(segment):
     lo, hi, rest = parse_prices(segment)
     colors, neg_colors, rest = find_colors(rest)
+    ctx_m = CONTEXT_GARMENT_RE.search(rest)
+    if ctx_m:
+        before_ctx = rest[:ctx_m.start()]
+        b_types, b_hits = find_types(before_ctx)
+        if b_types or 'layer' in before_ctx.lower() or 'something' in before_ctx.lower():
+            return {'text': segment.strip(), 'types': b_types, 'colors': colors, 'negative_colors': neg_colors,
+                    'audience': find_audience(segment), 'min_price': lo, 'max_price': hi, '_hits': b_hits,
+                    'context': segment.strip()}
     types, hits = find_types(rest)
     return {'text': segment.strip(), 'types': types, 'colors': colors, 'negative_colors': neg_colors,
             'audience': find_audience(segment), 'min_price': lo, 'max_price': hi, '_hits': hits}
@@ -368,6 +394,8 @@ def rating_constraints(query):
 
 def rule_parse(query):
     min_rating, min_reviews, query = rating_constraints(query)
+    if IMPERATIVE_RE.search(query):
+        return {'relevant': False, 'choices': [], 'complements': [], 'source': 'rules', 'complement_requested': False}
     g_lo = g_hi = None
     m = re.search(r'between\s*' + PRICE_NUM + r'\s*(?:and|-|–|to)\s*' + PRICE_NUM, query.casefold())
     if m:
@@ -397,6 +425,14 @@ def rule_parse(query):
         c['audience'] = c['audience'] or aud
         if c['min_price'] is None and c['max_price'] is None:
             c['min_price'], c['max_price'] = lo, hi
+    # Shared per-item budget: if only 1 distinct budget was stated across all items, share it
+    all_specs = choices + complements
+    all_budgets = {(c['min_price'], c['max_price']) for c in all_specs if c['min_price'] is not None or c['max_price'] is not None}
+    if len(all_budgets) == 1:
+        blo, bhi = next(iter(all_budgets))
+        for c in all_specs:
+            if c['min_price'] is None and c['max_price'] is None:
+                c['min_price'], c['max_price'] = blo, bhi
     # Body part inferences (e.g. keep hands warm -> Gloves; freezing feet -> Socks/Slippers)
     if not any(c.get('types') for c in choices):
         q_low = query.casefold()
