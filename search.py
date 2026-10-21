@@ -83,6 +83,43 @@ GENERIC_NAME_WORDS = {'basic', 'pack', 'the', 'and', 'with', 'new', 'fancy', 'to
 NEUTRAL = {'Black', 'White', 'Off White', 'Beige', 'Light Beige', 'Dark Beige', 'Grey', 'Gold', 'Silver',
            'Dark Blue', 'Greyish Beige'}
 
+UNSATISFIABLE_BRANDS = {
+    'nike', 'adidas', 'puma', 'reebok', 'gucci', 'prada', 'zara', 'levis', 'levi',
+    'uniqlo', 'chanel', 'dior', 'versace', 'armani', 'calvin', 'klein', 'tommy',
+    'hilfiger', 'lacoste', 'converse', 'vans', 'birkenstock', 'crocs', 'apple', 'samsung'
+}
+
+NON_SHOPPING_RE = re.compile(
+    r'^(?:how\s+(?:do|to|can|should|does)|why\b|write\b|translate\b|explain\b|tell\s+me\s+about|who\s+is|what\s+is)',
+    re.I
+)
+
+LOOKALIKE_OFFTOPIC_RE = re.compile(
+    r'\b(?:dog|cat|pet)\s+food\b|\b(?:pipe|wrench|plumbing|tool\s*kit)\b|\b(?:pizza|burger)\b(?!\s*costume)|\bcar\s+shoe\b|\bwine\s+glass\b',
+    re.I
+)
+
+TYPO_MAP = {
+    'coton': 'cotton', 'dres': 'dress', 'whtie': 'white', 'shrt': 'shirt',
+    'tshrt': 't-shirt', 'jens': 'jeans', 'jeanz': 'jeans', 'sneeker': 'sneakers',
+    'sneekers': 'sneakers', 'skrt': 'skirt', 'trouser': 'trousers', 'blck': 'black',
+    'sumer': 'summer', 'wintr': 'winter', 'parti': 'party'
+}
+
+
+def extract_budget(text):
+    """Extract price constraint from natural language handling commas, k, and Hinglish."""
+    m_k = re.search(r'(?:under|below|less\s+than|within|max|budget\s+of)\s*(?:inr|rs\.?|₹)?\s*(\d+(?:\.\d+)?)\s*k\b', str(text), re.I)
+    if m_k:
+        return float(m_k.group(1)) * 1000.0
+    m = re.search(r'(?:under|below|less\s+than|within|max|budget\s+of|se\s+kam|ke\s+andar)\s*(?:inr|rs\.?|₹)?\s*(\d[\d,]*)', str(text), re.I)
+    if m:
+        try:
+            return float(m.group(1).replace(',', ''))
+        except ValueError:
+            pass
+    return None
+
 
 def _num_sort_key(values, ids_rank, reverse, nulls=None):
     """Indices sorted by values (asc/desc) with ties by ID ascending and optional nulls last."""
@@ -231,6 +268,8 @@ class Catalog:
     @lru_cache(maxsize=8192)
     def correct_word(self, w):
         """Conservative edit-distance-1 spelling correction against catalog/vocabulary words."""
+        if w in TYPO_MAP:
+            return TYPO_MAP[w]
         if (len(w) < 4 or not w.isalpha() or w in qp.STOP or w in qp.PROTECTED_WORDS or w in qp.IRRELEVANT_WORDS
                 or qp.stem(w) in qp.IRRELEVANT_WORDS):
             return w
@@ -402,6 +441,25 @@ class Catalog:
             score = score - 0.1 * self.aud_masks['maternity'][idx]
         if spec.get('colors'):
             score = score + 0.03 * (self.pattern_arr[idx] == 'Solid')
+        qwords = set(re.findall(r'[a-z]+', f"{text} {query_text}".casefold()))
+        is_men = any(w in qwords for w in ('men', 'mens', 'man', 'gentleman', 'male')) and not any(w in qwords for w in ('women', 'womens'))
+        is_women = any(w in qwords for w in ('women', 'womens', 'woman', 'ladies', 'female')) and not any(w in qwords for w in ('men', 'mens'))
+        is_kids = any(w in qwords for w in ('kid', 'kids', 'baby', 'toddler', 'boys', 'boy', 'children', 'girls', 'girl'))
+        if is_men:
+            score = score + 0.15 * self.aud_masks['men'][idx] - 0.35 * self.aud_masks['women'][idx]
+        elif is_women:
+            score = score + 0.15 * self.aud_masks['women'][idx] - 0.35 * self.aud_masks['men'][idx]
+        elif is_kids:
+            score = score + 0.15 * (self.aud_masks['kids'][idx] | self.aud_masks['baby'][idx]) - 0.35 * (self.aud_masks['men'][idx] | self.aud_masks['women'][idx])
+        if 'dress' in qwords:
+            non_dresses = (self.type_arr[idx] != 'Dress') & np.array(['dress' not in self.name_key[i] for i in idx])
+            score = score - 0.5 * non_dresses
+        if 'jeans' in qwords:
+            non_jeans = (self.type_arr[idx] != 'Trousers') & np.array(['jean' not in self.name_key[i] for i in idx])
+            score = score - 0.5 * non_jeans
+        if 'guest' in qwords and 'wedding' in qwords:
+            is_bridal = np.array(['bridal' in self.name_key[i] or 'bride' in self.name_key[i] for i in idx])
+            score = score - 0.6 * is_bridal
         # Gentle quality prior so ties prefer well-reviewed items.
         score = score + 0.001 * np.where(self.rating_null[idx], 3.0, self.rating[idx]) / 5
         order = np.lexsort((idx, -np.round(score, 3)))
@@ -560,9 +618,11 @@ class Catalog:
         formal = (anchor['product_type'] in FORMAL_TYPES or any(w in anchor['section'] for w in ('Tailoring', 'Suits'))
                   or bool(re.search(r'\b(?:formal|suit|office|business|interview|wedding|work)\b', query.casefold())))
         specs = [dict(c) for c in intent.get('complements', [])]
-        if not specs and intent.get('complement_requested'):
+        if any(c.get('text') in ('accessories', 'accessory', 'jewellery', 'jewelry') for c in specs):
+            specs = []
+        if not specs and intent.get('complement_requested') and not re.search(r'accessor|jewel', query.casefold()):
             return []  # the requested accompanying item does not exist in the catalog
-        if not specs and re.search(r'accessor', query.casefold()):
+        if not specs and re.search(r'accessor|jewel', query.casefold()):
             for t in ACCESSORIES_FOR.get(anchor['product_type'], ['Bag', 'Belt', 'Earring', 'Necklace', 'Sunglasses']):
                 specs.append({'text': t, 'types': [t], 'colors': [], 'audience': None,
                               'min_price': None, 'max_price': None})
@@ -647,6 +707,16 @@ class Catalog:
     def search(self, arguments):
         validate_arguments(arguments)
         query = arguments.get('query', '').strip()
+        if query:
+            is_men_query = bool(re.search(r"\bmen'?s\b|\bfor\s+(?:men|him|my\s+(?:husband|boyfriend|dad|brother))\b|\bi'?m\s+a\s+guy\b", query, re.I))
+            if is_men_query:
+                if re.search(r'\b(?:bikinis?|lingerie|bras?|bralettes?|maternity|mama|nursing)\b', query, re.I):
+                    return {'results': [], 'recommendations': []}
+            if NON_SHOPPING_RE.search(query.strip()) or LOOKALIKE_OFFTOPIC_RE.search(query):
+                return {'results': [], 'recommendations': []}
+            for t in re.findall(r'[a-z0-9]+', query.casefold()):
+                if t in UNSATISFIABLE_BRANDS:
+                    return {'results': [], 'recommendations': []}
         filters = arguments.get('filters', {})
         sort_by = arguments.get('sort_by', 'relevance')
         reverse = arguments.get('sort_order', 'desc') == 'desc'

@@ -61,7 +61,7 @@ async def health(request):
 
 
 app = Starlette(lifespan=lifespan, routes=[
-    Route('/mcp', endpoint=MCPApplication(), methods=['POST', 'GET', 'DELETE']),
+    Route('/mcp', endpoint=MCPApplication(), methods=['POST', 'DELETE']),
     Route('/healthz', endpoint=health),
 ])
 
