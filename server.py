@@ -66,4 +66,6 @@ app = Starlette(lifespan=lifespan, routes=[
 ])
 
 if __name__ == '__main__':
-    uvicorn.run(app, host=os.getenv('HOST', '0.0.0.0'), port=int(os.getenv('PORT', '8000')))
+    # Keep idle connections open for 120s so AWS ALB doesn't reuse closed sockets when judge pauses between categories
+    uvicorn.run(app, host=os.getenv('HOST', '0.0.0.0'), port=int(os.getenv('PORT', '8000')),
+                timeout_keep_alive=int(os.getenv('KEEP_ALIVE_SECONDS', '120')))

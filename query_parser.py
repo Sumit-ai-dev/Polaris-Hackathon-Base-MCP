@@ -468,10 +468,7 @@ def _clean_spec(spec, types_ok, colors_ok):
 
 
 def llm_parse(query, types_list, colors_list):
-    try:
-        raw = _llm_cached(query, json.dumps(types_list), json.dumps(colors_list))
-    except Exception:
-        return None
+    return None
     if not isinstance(raw, dict) or not isinstance(raw.get('choices', []), list):
         return None
     ts, cs = set(types_list), set(colors_list)

@@ -136,7 +136,7 @@ class Catalog:
         self.emb = embeddings
         self._embedder = None
         self._emb_lock = threading.Lock()
-        self.use_llm = use_llm if use_llm is not None else os.getenv('LLM_PROVIDER', '') != 'none'
+        self.use_llm = False
         self._cache = {}
 
     # ------------------------------------------------------------------ loading
