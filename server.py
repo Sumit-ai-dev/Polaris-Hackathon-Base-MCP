@@ -35,9 +35,9 @@ async def call_tool(name, arguments):
 
 
 security = TransportSecuritySettings(
-    allowed_hosts=[h.strip() for h in os.getenv('MCP_ALLOWED_HOSTS',
-        'localhost:*,127.0.0.1:*,[::1]:*').split(',') if h.strip()],
-    allowed_origins=[o.strip() for o in os.getenv('MCP_ALLOWED_ORIGINS', '').split(',') if o.strip()],
+    enable_dns_rebinding_protection=False,
+    allowed_hosts=[h.strip() for h in os.getenv('MCP_ALLOWED_HOSTS', '*').split(',') if h.strip()],
+    allowed_origins=[o.strip() for o in os.getenv('MCP_ALLOWED_ORIGINS', '*').split(',') if o.strip()],
 )
 sessions = StreamableHTTPSessionManager(server, json_response=True, stateless=True, security_settings=security)
 
