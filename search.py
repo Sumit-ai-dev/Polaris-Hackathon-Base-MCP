@@ -696,7 +696,16 @@ class Catalog:
     def _complement_candidates(self, spec, aud, anchor, anchor_colors, exclude, formal=False):
         mask = np.ones(len(self.products), dtype=bool)
         spec = dict(spec)
-        spec['audience'] = spec.get('audience') or aud
+        target_aud = spec.get('audience')
+        if target_aud is None and aud:
+            test_mask = np.ones(len(self.products), dtype=bool)
+            if aud in self.aud_masks:
+                test_mask &= self.aud_masks[aud]
+            if spec.get('types'):
+                test_mask &= np.isin(self.type_arr, spec['types'])
+            if test_mask.any():
+                target_aud = aud
+        spec['audience'] = target_aud
         mask = self.spec_mask(spec, {}, mask)
         if spec['audience'] in self.aud_masks:
             mask &= self.aud_masks[spec['audience']]
