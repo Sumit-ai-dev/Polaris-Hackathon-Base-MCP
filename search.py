@@ -36,8 +36,9 @@ STOPWORDS = {
 
 GARMENT_NOUNS = {
     'dress', 'top', 'shirt', 't-shirt', 'tshirt', 'tee', 'jeans', 'skirt',
-    'trousers', 'pants', 'pant', 'jacket', 'coat', 'blazer', 'sweater', 'hoodie',
-    'cardigan', 'shoes', 'shoe', 'sneakers', 'sneaker', 'boots', 'boot', 'sandals', 'sandal',
+    'trousers', 'pants', 'pant', 'chinos', 'chino', 'sweatpants', 'sweatpant', 'joggers', 'jogger',
+    'jacket', 'coat', 'blazer', 'sweater', 'hoodie', 'pullover', 'cardigan',
+    'shoes', 'shoe', 'sneakers', 'sneaker', 'boots', 'boot', 'sandals', 'sandal',
     'bag', 'handbag', 'backpack', 'tote', 'clutch', 'shorts', 'suit', 'vest', 'dungarees',
     'jumpsuit', 'playsuit', 'swimsuit', 'bikini', 'swimwear', 'pyjama',
     'pyjamas', 'nightwear', 'leggings', 'bra', 'briefs', 'socks', 'belt',
@@ -46,42 +47,63 @@ GARMENT_NOUNS = {
 }
 
 OCCASIONS = {
-    'wedding': ['formal', 'party', 'cocktail', 'elegant', 'smart', 'guest', 'ceremony', 'traditional', 'ethnic', 'suit', 'dress'],
-    'guest': ['wedding', 'party', 'formal', 'cocktail', 'dress', 'suit', 'smart'],
-    'dinner': ['evening', 'party', 'dressy', 'formal', 'black', 'cocktail', 'night', 'smart'],
-    'party': ['evening', 'cocktail', 'celebration', 'glitter', 'sparkle', 'night'],
-    'gym': ['sport', 'workout', 'running', 'active', 'training'],
-    'workout': ['sport', 'gym', 'active', 'training'],
-    'monsoon': ['rain', 'water', 'jacket', 'boots', 'umbrella'],
-    'rainy': ['rain', 'water', 'jacket', 'boots'],
+    'wedding': ['formal', 'party', 'cocktail', 'elegant', 'smart', 'guest', 'ceremony', 'traditional', 'ethnic', 'suit', 'dress', 'blazer', 'gown'],
+    'guest': ['wedding', 'party', 'formal', 'cocktail', 'dress', 'suit', 'smart', 'blazer'],
+    'dinner': ['evening', 'party', 'dressy', 'formal', 'black', 'cocktail', 'night', 'smart', 'dress', 'blazer'],
+    'party': ['evening', 'cocktail', 'celebration', 'glitter', 'sparkle', 'night', 'dress'],
+    'gym': ['sport', 'workout', 'running', 'active', 'training', 'shorts', 'leggings', 't-shirt'],
+    'workout': ['sport', 'gym', 'active', 'training', 'shorts', 'leggings', 'top'],
+    'training': ['sport', 'workout', 'gym', 'active', 'shorts', 'leggings', 't-shirt', 'jogger'],
+    'athletic': ['sport', 'active', 'training', 'running', 'shorts', 'leggings', 't-shirt', 'sneakers'],
+    'monsoon': ['rain', 'water', 'jacket', 'boots', 'umbrella', 'coat', 'waterproof'],
+    'rainy': ['rain', 'water', 'jacket', 'boots', 'coat'],
+    'rainwear': ['rain', 'water', 'jacket', 'boots', 'coat'],
+    'waterproof': ['jacket', 'coat', 'boots', 'rain', 'trousers', 'pant'],
     'funeral': ['black', 'dark', 'formal', 'suit', 'blazer', 'modest'],
-    'sunday': ['casual', 'relaxed', 'cotton', 'jersey', 'basics', 'loungewear'],
+    'mourning': ['black', 'dark', 'formal', 'suit', 'blazer', 'modest'],
+    'sunday': ['casual', 'relaxed', 'cotton', 'jersey', 'basics', 'loungewear', 'pyjama'],
     'lazy': ['casual', 'relaxed', 'cotton', 'jersey', 'basics', 'loungewear', 'pyjama'],
-    'beach': ['swimwear', 'summer', 'holiday', 'resort', 'sandals', 'linen'],
-    'summer': ['linen', 'cotton', 'sleeveless', 'short', 'strap', 'light'],
-    'winter': ['wool', 'warm', 'knit', 'heavy', 'jacket', 'coat', 'sweater', 'thermal'],
-    'office': ['formal', 'work', 'blazer', 'trousers', 'shirt', 'smart'],
-    'formal': ['smart', 'office', 'blazer', 'suit', 'trousers', 'tie'],
-    'casual': ['basics', 'everyday', 'denim', 'jersey', 'relaxed']
+    'loungewear': ['pyjama', 'pyjamas', 'jersey', 'nightwear', 'casual', 'relaxed', 'bottoms'],
+    'beach': ['swimwear', 'summer', 'holiday', 'resort', 'sandals', 'linen', 'swimsuit', 'bikini', 'dress'],
+    'resort': ['holiday', 'summer', 'beach', 'linen', 'dress', 'sandals', 'swimwear', 'swimsuit'],
+    'holiday': ['summer', 'beach', 'resort', 'dress', 'linen', 'sandals', 'swimwear'],
+    'summer': ['linen', 'cotton', 'sleeveless', 'short', 'strap', 'light', 'dress'],
+    'winter': ['wool', 'warm', 'knit', 'heavy', 'jacket', 'coat', 'sweater', 'thermal', 'cardigan'],
+    'cabin': ['sweater', 'cardigan', 'wool', 'jacket', 'thermal', 'warm', 'knit'],
+    'thermal': ['warm', 'winter', 'wool', 'knit', 'sweater', 'tights'],
+    'grunge': ['denim', 'jacket', 'boots', 'shirt', 'flannel', 'check', 'distressed', 'vintage'],
+    'rock': ['denim', 'jacket', 'boots', 'shirt', 'black', 'leather', 'graphic', 'vintage'],
+    'office': ['formal', 'work', 'blazer', 'trousers', 'shirt', 'smart', 'suit'],
+    'formal': ['smart', 'office', 'blazer', 'suit', 'trousers', 'tie', 'dress'],
+    'casual': ['basics', 'everyday', 'denim', 'jersey', 'relaxed', 't-shirt'],
 }
 
 SYNONYMS = {
-    'attire': ['clothing', 'dress', 'top', 'suit', 'outfit', 'garment'],
-    'apparel': ['clothing', 'dress', 'top', 'suit', 'outfit', 'garment'],
-    'outfit': ['clothing', 'dress', 'top', 'suit', 'set', 'garment'],
-    'garments': ['clothing', 'dress', 'top', 'suit', 'outfit'],
-    'clothes': ['clothing', 'dress', 'top', 'suit', 'outfit'],
-    'pants': ['trousers', 'jeans', 'chinos', 'leggings'],
-    'trousers': ['pants', 'chinos', 'slacks'],
+    'attire': ['clothing', 'outfit', 'garment', 'wear', 'suit', 'dress'],
+    'apparel': ['clothing', 'outfit', 'garment', 'wear', 'sportswear'],
+    'outfit': ['clothing', 'suit', 'garment', 'dress', 'swimwear'],
+    'garments': ['clothing', 'outfit', 'apparel'],
+    'clothes': ['clothing', 'outfit', 'garment'],
+    'pants': ['trousers', 'jeans', 'chinos', 'slacks', 'sweatpants'],
+    'trousers': ['pants', 'chinos', 'slacks', 'sweatpants'],
+    'chinos': ['trousers', 'pants'],
+    'chino': ['trousers', 'pants'],
+    'sweatpants': ['trousers', 'pants', 'joggers'],
+    'sweatpant': ['trousers', 'pants', 'jogger'],
+    'joggers': ['trousers', 'pants', 'sweatpants'],
+    'jogger': ['trousers', 'pants', 'sweatpant'],
     'jeans': ['denim', 'pants', 'trousers'],
     'sneakers': ['shoes', 'trainers'],
+    'trainers': ['sneakers', 'shoes'],
     'shoes': ['footwear', 'sneakers', 'boots', 'sandals', 'ballerinas', 'pumps'],
-    'hoodie': ['sweatshirt', 'sweater', 'jumper'],
+    'hoodie': ['sweatshirt', 'sweater', 'jumper', 'pullover'],
+    'pullover': ['hoodie', 'sweater', 'sweatshirt', 'jumper'],
     'sweater': ['pullover', 'jumper', 'cardigan', 'knitwear'],
     'top': ['shirt', 'blouse', 't-shirt', 'vest top'],
     'tee': ['t-shirt', 'top'],
     'tshirt': ['t-shirt', 'top'],
     'dress': ['gown', 'frock'],
+    'blazer': ['jacket', 'suit'],
     'jacket': ['blazer', 'coat', 'outerwear', 'windbreaker'],
     'coat': ['jacket', 'outerwear', 'parka'],
     'bag': ['handbag', 'backpack', 'tote', 'clutch', 'crossbody', 'purse'],
@@ -100,7 +122,8 @@ OFF_TOPIC_KEYWORDS = {
     'tires', 'tire', 'battery', 'automotive', 'vehicle', 'mechanic', 'spaceship',
     'airplane', 'flight', 'ticket', 'hotel', 'medicine', 'antibiotics', 'pharma',
     'prescription', 'drug', 'food', 'groceries', 'pizza', 'burger', 'vegetable',
-    'meat', 'furniture', 'sofa', 'refrigerator', 'microwave', 'plumbing', 'wrench'
+    'meat', 'furniture', 'sofa', 'refrigerator', 'microwave', 'plumbing', 'wrench',
+    'investment', 'crypto', 'bitcoin', 'coin'
 }
 
 COMPLEMENT_PATTERNS = [
@@ -112,7 +135,7 @@ COMPLEMENT_PATTERNS = [
 
 def stem_token(t):
     """Normalize plural words to singular forms for fashion items."""
-    if t in ('jeans', 'shorts', 'trousers', 'sunglasses', 'glasses', 'basics', 'lingeries'):
+    if t in ('jeans', 'shorts', 'trousers', 'sunglasses', 'glasses', 'basics', 'lingeries', 'pants', 'sweatpants'):
         return t
     if t.endswith('sses'):
         return t[:-2]
@@ -141,10 +164,16 @@ def tokens(text):
     return tuple(re.findall(r'[a-z0-9]+', str(text).casefold()))
 
 
+def extract_negations(text):
+    """Extract negative exclusion terms (e.g., 'not adidas', 'without heels', 'no red')."""
+    return set(re.findall(r'\b(?:not|no|except|excluding|without)\s+([a-z0-9]+)\b', str(text).casefold()))
+
+
 def clean_query_text(text):
-    """Remove price/budget numbers and currency words so they don't corrupt text retrieval."""
+    """Remove price/budget numbers, currency words, and negative phrases so they don't corrupt text retrieval."""
     cleaned = re.sub(r'(?:under|below|less\s+than|within|max)\s+(?:inr\s*|rs\.?\s*)?\d+', ' ', text, flags=re.IGNORECASE)
     cleaned = re.sub(r'\b(?:inr|rs|rupees|each)\b', ' ', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\b(?:not|no|except|excluding|without)\s+[a-z0-9]+\b', ' ', cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
 
@@ -249,42 +278,76 @@ class Catalog:
         return len(known) == 0
 
     def candidate_pids_for_tokens(self, toks):
-        """Ultra-fast inverted index lookup to retrieve candidate PIDs in <5ms."""
+        """Ultra-fast inverted index lookup to retrieve candidate PIDs balancing recall, precision, and latency."""
         content = [t for t in toks if t not in STOPWORDS and len(t) > 1]
         if not content:
             content = [t for t in toks if len(t) > 1]
         if not content:
             return set(self.products_by_id.keys())
 
-        sets = []
-        for t in content:
-            s = set(self.token_to_pids.get(t, ()))
-            st = stem_token(t)
-            if st != t:
-                s.update(self.token_to_pids.get(st, ()))
-            if t in SYNONYMS:
-                for syn in SYNONYMS[t]:
+        gn = [stem_token(t) for t in content if stem_token(t) in GARMENT_NOUNS or t in GARMENT_NOUNS]
+
+        if gn:
+            garment_pids = set()
+            for g in gn:
+                garment_pids.update(self.token_to_pids.get(g, ()))
+                st = stem_token(g)
+                if st != g:
+                    garment_pids.update(self.token_to_pids.get(st, ()))
+                for syn in SYNONYMS.get(g, ()):
                     for sn in tokens(syn):
-                        s.update(self.token_to_pids.get(sn, ()))
-            if t in OCCASIONS:
-                for occ in OCCASIONS[t]:
+                        garment_pids.update(self.token_to_pids.get(sn, ()))
+
+            modifiers = [t for t in content if stem_token(t) not in GARMENT_NOUNS and t not in GARMENT_NOUNS]
+            if modifiers and garment_pids:
+                refined = set()
+                for m in modifiers:
+                    refined.update(garment_pids & self.token_to_pids.get(m, set()))
+                    st = stem_token(m)
+                    if st != m:
+                        refined.update(garment_pids & self.token_to_pids.get(st, set()))
+                    for occ in OCCASIONS.get(m, ()) + OCCASIONS.get(st, ()):
+                        for on in tokens(occ):
+                            refined.update(garment_pids & self.token_to_pids.get(on, set()))
+                    for syn in SYNONYMS.get(m, ()) + SYNONYMS.get(st, ()):
+                        for sn in tokens(syn):
+                            refined.update(garment_pids & self.token_to_pids.get(sn, set()))
+
+                if len(refined) >= 20:
+                    rem = list(garment_pids - refined)[:300]
+                    return refined | set(rem)
+                else:
+                    return garment_pids
+            return garment_pids if garment_pids else set(self.products_by_id.keys())
+        else:
+            # Descriptive / occasion query without explicit garment noun:
+            # Union postings across terms, ranked by match frequency
+            counts = defaultdict(int)
+            for t in content:
+                st = stem_token(t)
+                tok_pids = set(self.token_to_pids.get(t, ())) | set(self.token_to_pids.get(st, ()))
+                for occ in OCCASIONS.get(t, ()) + OCCASIONS.get(st, ()):
                     for on in tokens(occ):
-                        s.update(self.token_to_pids.get(on, ()))
-            if s:
-                sets.append(s)
+                        tok_pids.update(self.token_to_pids.get(on, ()))
+                for syn in SYNONYMS.get(t, ()) + SYNONYMS.get(st, ()):
+                    for sn in tokens(syn):
+                        tok_pids.update(self.token_to_pids.get(sn, ()))
+                for pid in tok_pids:
+                    counts[pid] += 1
 
-        if not sets:
-            return set()
-
-        sets.sort(key=len)
-        res = set(sets[0])
-        for s in sets[1:]:
-            inter = res & s
-            if len(inter) >= 1:
-                res = inter
-            else:
-                res.update(s)
-        return res
+            if not counts:
+                return set()
+            buckets = defaultdict(list)
+            for pid, cnt in counts.items():
+                buckets[cnt].append(pid)
+            result = []
+            for cnt in sorted(buckets.keys(), reverse=True):
+                b = buckets[cnt]
+                b.sort()
+                result.extend(b)
+                if len(result) >= 1500:
+                    break
+            return set(result[:1500])
 
     def relevance(self, product, query_tokens, budget_limit=None, query_garment_nouns=None):
         """Soft-weighted multi-field scoring with stemming and garment intent preservation."""
@@ -348,16 +411,16 @@ class Catalog:
                 score += 1.5
                 direct_match = True
 
-            # Synonym match
+            # Synonym match - check product_type bonus (e.g. chinos -> Trousers)
             syn_list = SYNONYMS.get(t, []) + SYNONYMS.get(st, [])
-            if not direct_match and syn_list:
+            if syn_list:
                 for syn in syn_list:
                     syn_toks = tokens(syn)
-                    if any(s in name_toks or s in type_toks or stem_token(s) in type_toks for s in syn_toks):
+                    if any(s in type_toks or stem_token(s) in type_toks for s in syn_toks):
                         score += 3.0
                         direct_match = True
                         break
-                    elif any(s in words for s in syn_toks):
+                    elif not direct_match and any(s in words for s in syn_toks):
                         score += 1.2
                         direct_match = True
                         break
@@ -366,8 +429,12 @@ class Catalog:
             occ_list = OCCASIONS.get(t, []) + OCCASIONS.get(st, [])
             if not direct_match and occ_list:
                 for occ_word in occ_list:
-                    if occ_word in words:
-                        score += 2.0
+                    if occ_word in name_toks or occ_word in type_toks:
+                        score += 3.0
+                        direct_match = True
+                        break
+                    elif occ_word in words:
+                        score += 1.5
                         direct_match = True
                         break
 
@@ -377,14 +444,11 @@ class Catalog:
         if matched_terms == 0:
             return 0.0
 
-        # Term coverage requirement:
-        # If product has the requested garment noun, it is already a strong match.
-        # Otherwise require at least 50% term coverage.
         coverage = matched_terms / len(content)
-        if not product_has_requested_garment and coverage < 0.5:
-            return 0.0
-
-        score *= (0.5 + 0.5 * coverage)
+        # Continuous smooth coverage penalty
+        score *= (0.3 + 0.7 * coverage)
+        if not product_has_requested_garment and coverage < 0.25:
+            score *= 0.5
 
         # Budget constraint handling
         if budget_limit is not None:
@@ -394,10 +458,37 @@ class Catalog:
             else:
                 score *= max(0.1, 1.0 - (price - budget_limit) / budget_limit)
 
+        # FIX A: Funeral / Mourning color and modesty preference
+        if any(t in query_tokens for t in ('funeral', 'mourning')):
+            color_l = str(product.get('color') or '').lower()
+            if any(dark_c in color_l for dark_c in ('black', 'dark', 'navy')):
+                score += 2.5
+            elif any(bright_c in color_l for bright_c in ('yellow', 'pink', 'orange', 'red', 'light green')):
+                score *= 0.3
+
+        # FIX B: Grunge / Rock band queries - deprioritize hairband accessories
+        if any(t in query_tokens for t in ('grunge', 'rock', 'metal', 'punk')) and 'band' in query_tokens:
+            ptype_l = str(product.get('product_type') or '').lower()
+            if 'band' in ptype_l or str(product.get('category') or '') == 'Accessories':
+                score *= 0.1
+
+        # FIX C: Deprioritize obvious costumes and fancy-dress products for formal occasions
+        if any(t in query_tokens for t in ('wedding', 'formal', 'business', 'funeral', 'mourning', 'office', 'cocktail')):
+            ptype_l = str(product.get('product_type') or '').lower()
+            name_l = str(product.get('name') or '').lower()
+            desc_l = str(product.get('description') or '').lower()
+            if ptype_l == 'costumes' or 'fancy dress' in name_l or 'fancy dress' in desc_l or name_l.startswith('dress up '):
+                score *= 0.1
+
         return score
 
     @staticmethod
-    def matches(product, filters):
+    def matches(product, filters, negative_terms=None):
+        if negative_terms:
+            p_text = ' '.join(str(product.get(k) or '').lower() for k in ('name', 'product_type', 'color', 'category'))
+            for neg in negative_terms:
+                if neg in p_text:
+                    return False
         for key in STRING_FILTERS:
             if key in filters and str(product.get(key) or '').strip().casefold() != filters[key].strip().casefold():
                 return False
@@ -512,6 +603,7 @@ class Catalog:
         cleaned_primary = clean_query_text(primary_query_str)
         query_toks = tokens(cleaned_primary)
         filters = arguments.get('filters', {})
+        negative_terms = extract_negations(raw_query)
 
         # 1. Non-fashion / off-topic query check
         if query_toks and self.is_irrelevant_query(tokens(raw_query)):
@@ -527,19 +619,21 @@ class Catalog:
             if len(raw_parts) == 2:
                 p1_toks = tokens(clean_query_text(raw_parts[0]))
                 p2_toks = tokens(clean_query_text(raw_parts[1]))
-                if p1_toks and p2_toks:
+                has_anchor1 = any(stem_token(t) in GARMENT_NOUNS or t in GARMENT_NOUNS for t in p1_toks) or len(p1_toks) >= 2
+                has_anchor2 = any(stem_token(t) in GARMENT_NOUNS or t in GARMENT_NOUNS for t in p2_toks) or len(p2_toks) >= 2
+                if p1_toks and p2_toks and has_anchor1 and has_anchor2:
                     parts = [p1_toks, p2_toks]
                     is_mixed = True
 
         # Candidate pre-filtering via inverted index for ultra-low latency (<10ms)
         if is_mixed:
             cand_pids = self.candidate_pids_for_tokens(parts[0]) | self.candidate_pids_for_tokens(parts[1])
-            candidates = [self.products_by_id[pid] for pid in sorted(cand_pids) if self.matches(self.products_by_id[pid], filters)]
+            candidates = [self.products_by_id[pid] for pid in sorted(cand_pids) if self.matches(self.products_by_id[pid], filters, negative_terms)]
         elif query_toks:
             cand_pids = self.candidate_pids_for_tokens(query_toks)
-            candidates = [self.products_by_id[pid] for pid in sorted(cand_pids) if self.matches(self.products_by_id[pid], filters)]
+            candidates = [self.products_by_id[pid] for pid in sorted(cand_pids) if self.matches(self.products_by_id[pid], filters, negative_terms)]
         else:
-            candidates = [p for p in self.products if self.matches(p, filters)]
+            candidates = [p for p in self.products if self.matches(p, filters, negative_terms)]
 
         scores = {}
         if is_mixed:

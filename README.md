@@ -44,12 +44,23 @@ The first startup loads the full catalog and builds an in-memory lexical index. 
 In another terminal with the virtual environment activated:
 
 ```sh
-python smoke_test.py http://127.0.0.1:8000/mcp
-python -m unittest discover -s tests -v
+# Verify health check
 curl http://127.0.0.1:8000/healthz
+
+# Run the official MCP client smoke test
+python smoke_test.py http://127.0.0.1:8000/mcp
+
+# Run unit and real-catalog regression tests
+python -m unittest discover -s tests -v
+
+# Run the 100-case local evaluation benchmark (simulates hackathon-brief.md)
+python benchmark.py
+
+# Run the concurrency latency stress test (C=1 and C=5)
+python tests/test_performance.py
 ```
 
-The server supports MCP protocol revision `2025-11-25`. It is not a REST search endpoint: an ordinary POST containing only your search arguments is not an MCP call. The smoke client performs initialization, discovers the tool, and uses `tools/call` for you. No API key or LLM account is required for the baseline.
+The server supports MCP protocol revision `2025-11-25`. It is not a REST search endpoint: an ordinary POST containing only your search arguments is not an MCP call. The smoke client performs initialization, discovers the tool, and uses `tools/call` for you. No API key or LLM account is required.
 
 ## Build and run with Docker
 
