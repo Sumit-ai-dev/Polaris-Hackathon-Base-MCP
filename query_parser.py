@@ -27,7 +27,7 @@ COLOR_WORDS = {
     'green': ['Green', 'Dark Green', 'Light Green', 'Other Green', 'Greenish Khaki'], 'dark green': ['Dark Green'],
     'light green': ['Light Green'], 'olive': ['Greenish Khaki', 'Dark Green'], 'khaki': ['Greenish Khaki'],
     'mint': ['Light Green', 'Light Turquoise'],
-    'grey': ['Grey', 'Dark Grey', 'Light Grey'], 'gray': ['Grey', 'Dark Grey', 'Light Grey'],
+    'grey': ['Grey', 'Dark Grey', 'Light Grey', 'Greyish Beige'], 'gray': ['Grey', 'Dark Grey', 'Light Grey', 'Greyish Beige'],
     'dark grey': ['Dark Grey'], 'dark gray': ['Dark Grey'], 'light grey': ['Light Grey'], 'light gray': ['Light Grey'],
     'charcoal': ['Dark Grey'],
     'beige': ['Beige', 'Light Beige', 'Dark Beige', 'Greyish Beige'], 'nude': ['Light Beige', 'Beige'],
@@ -51,6 +51,7 @@ TYPE_WORDS = {
     'cargo': ['Trousers', 'Shorts'], 'legging': ['Leggings/Tights'], 'tight': ['Leggings/Tights', 'Underwear Tights'],
     'pantyhose': ['Underwear Tights'], 'stocking': ['Underwear Tights'],
     'dress': ['Dress'], 'gown': ['Dress'], 'frock': ['Dress'], 'sundress': ['Dress'], 'maxi': ['Dress', 'Skirt'],
+    'midi': ['Dress', 'Skirt'], 'mini': ['Dress', 'Skirt'],
     'sweater': ['Sweater'], 'jumper': ['Sweater'], 'pullover': ['Sweater'], 'knit': ['Sweater', 'Cardigan'],
     'sweatshirt': ['Sweater', 'Hoodie'],
     't-shirt': ['T-shirt'], 'tshirt': ['T-shirt'], 'tee': ['T-shirt'], 't shirt': ['T-shirt'],
@@ -97,7 +98,8 @@ TYPE_WORDS = {
     'headband': ['Hair/alice band', 'Alice band', 'Hairband', 'Headband'], 'hairband': ['Hair/alice band', 'Hairband'],
     'scrunchie': ['Hair string', 'Hair ties'], 'hair tie': ['Hair string', 'Hair ties'], 'hair clip': ['Hair clip'],
     'hairclip': ['Hair clip'], 'claw clip': ['Hair clip'], 'hair accessory': ['Hair/alice band', 'Hair clip', 'Hair string'],
-    'boot': ['Boots', 'Bootie'], 'sandal': ['Sandals', 'Heeled sandals'], 'heel': ['Heeled sandals', 'Pumps', 'Heels',
+    'boot': ['Boots', 'Bootie'], 'welly': ['Boots'], 'wellies': ['Boots'], 'rain boot': ['Boots'], 'rainboot': ['Boots'],
+    'sandal': ['Sandals', 'Heeled sandals'], 'heel': ['Heeled sandals', 'Pumps', 'Heels',
     'Wedge'], 'stiletto': ['Pumps', 'Heels'], 'pump': ['Pumps'], 'wedge': ['Wedge'], 'flat': ['Ballerinas', 'Flat shoe',
     'Flat shoes'], 'ballerina': ['Ballerinas'], 'ballet flat': ['Ballerinas'], 'loafer': ['Flat shoe', 'Other shoe',
     'Moccasins'], 'moccasin': ['Moccasins'], 'slipper': ['Slippers'], 'flip flop': ['Flip flop'],
@@ -106,7 +108,7 @@ TYPE_WORDS = {
     'necklace': ['Necklace'], 'pendant': ['Necklace'], 'chain': ['Necklace'], 'choker': ['Necklace'],
     'bracelet': ['Bracelet'], 'bangle': ['Bracelet'], 'ring': ['Ring'], 'jewellery': ['Necklace', 'Earring', 'Bracelet',
     'Ring'], 'jewelry': ['Necklace', 'Earring', 'Bracelet', 'Ring'], 'watch': ['Watch'],
-    'belt': ['Belt'], 'glove': ['Gloves'], 'mitten': ['Gloves'], 'tie': ['Tie'], 'necktie': ['Tie'], 'bow tie': ['Tie'],
+    'belt': ['Belt'], 'glove': ['Gloves'], 'gloves': ['Gloves'], 'mitten': ['Gloves'], 'mittens': ['Gloves'], 'tie': ['Tie'], 'necktie': ['Tie'], 'bow tie': ['Tie'],
     'umbrella': ['Umbrella'], 'sarong': ['Sarong'], 'cover up': ['Sarong'],
     'cover-up': ['Sarong'], 'kaftan': ['Dress', 'Sarong'], 'kimono': ['Jacket', 'Blouse', 'Robe'],
     'costume': ['Costumes'], 'fancy dress': ['Costumes'], 'soft toy': ['Soft Toys'], 'teddy': ['Soft Toys'],
@@ -233,13 +235,18 @@ def parse_prices(text):
 
 def find_colors(text):
     t = ' ' + re.sub(r'[^a-z\- ]', ' ', text.casefold()) + ' '
-    found = []
+    found, neg_found = [], []
+    for phrase in sorted(COLOR_WORDS, key=len, reverse=True):
+        m = re.search(r'\b(?:no|not|without|except|non)\s+' + re.escape(phrase) + r'\b', t)
+        if m:
+            neg_found += COLOR_WORDS[phrase]
+            t = t[:m.start()] + ' ' + t[m.end():]
     for phrase in sorted(COLOR_WORDS, key=len, reverse=True):
         p = f' {phrase} '
         if p in t:
             found += COLOR_WORDS[phrase]
             t = t.replace(p, ' ')
-    return list(dict.fromkeys(found)), t
+    return list(dict.fromkeys(found)), list(dict.fromkeys(neg_found)), t
 
 
 def find_types(text):
@@ -328,10 +335,10 @@ def _segments(text):
 
 def _spec(segment):
     lo, hi, rest = parse_prices(segment)
-    colors, _ = find_colors(rest)
+    colors, neg_colors, rest = find_colors(rest)
     types, hits = find_types(rest)
-    return {'text': segment.strip(), 'types': types, 'colors': colors, 'audience': find_audience(segment),
-            'min_price': lo, 'max_price': hi, '_hits': hits}
+    return {'text': segment.strip(), 'types': types, 'colors': colors, 'negative_colors': neg_colors,
+            'audience': find_audience(segment), 'min_price': lo, 'max_price': hi, '_hits': hits}
 
 
 RATING_RE = re.compile(r'(?:rated|rating(?: of)?|with)?\s*(?:at least|above|over|minimum|min|>=?)?\s*(\d(?:\.\d)?)\s*'
@@ -390,6 +397,41 @@ def rule_parse(query):
         c['audience'] = c['audience'] or aud
         if c['min_price'] is None and c['max_price'] is None:
             c['min_price'], c['max_price'] = lo, hi
+    # Body part inferences (e.g. keep hands warm -> Gloves; freezing feet -> Socks/Slippers)
+    if not any(c.get('types') for c in choices):
+        q_low = query.casefold()
+        toks = set(words(q_low))
+        if any(w in toks for w in ('warm', 'cold', 'freezing', 'chilly', 'freeze', 'protect', 'keep')):
+            BODY_PART_INTENTS = {
+                'hand': (['Gloves'], ['gloves']),
+                'hands': (['Gloves'], ['gloves']),
+                'foot': (['Socks', 'Slippers'], ['socks', 'slippers']),
+                'feet': (['Socks', 'Slippers'], ['socks', 'slippers']),
+                'neck': (['Scarf'], ['scarf']),
+                'ear': (['Hat/beanie'], ['beanie']),
+                'ears': (['Hat/beanie'], ['beanie']),
+            }
+            for part, (ptypes, search_words) in BODY_PART_INTENTS.items():
+                if part in toks:
+                    choices = [{
+                        'text': ' '.join(search_words),
+                        'types': ptypes,
+                        'colors': [],
+                        'negative_colors': [],
+                        'audience': aud,
+                        'min_price': lo,
+                        'max_price': hi,
+                        '_hits': search_words,
+                        'min_rating': min_rating,
+                        'min_reviews': min_reviews,
+                        'context': query,
+                    }]
+                    break
+
+    neg_colors_all = list(dict.fromkeys(c for ch in choices for c in ch.get('negative_colors', [])))
+    for c in choices:
+        c['negative_colors'] = c.get('negative_colors') or neg_colors_all
+
     # Drop choices that carry no product type when another choice has one (stray adjectives).
     if any(c['types'] for c in choices):
         typed = [c for c in choices if c['types']]

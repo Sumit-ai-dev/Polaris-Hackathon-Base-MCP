@@ -86,7 +86,7 @@ NEUTRAL = {'Black', 'White', 'Off White', 'Beige', 'Light Beige', 'Dark Beige', 
 UNSATISFIABLE_BRANDS = {
     'nike', 'adidas', 'puma', 'reebok', 'gucci', 'prada', 'zara', 'levis', 'levi',
     'uniqlo', 'chanel', 'dior', 'versace', 'armani', 'calvin', 'klein', 'tommy',
-    'hilfiger', 'lacoste', 'converse', 'vans', 'birkenstock', 'crocs', 'apple', 'samsung'
+    'hilfiger', 'lacoste', 'converse', 'vans', 'birkenstock', 'crocs', 'apple', 'samsung', 'iphone'
 }
 
 NON_SHOPPING_RE = re.compile(
@@ -104,6 +104,15 @@ TYPO_MAP = {
     'tshrt': 't-shirt', 'jens': 'jeans', 'jeanz': 'jeans', 'sneeker': 'sneakers',
     'sneekers': 'sneakers', 'skrt': 'skirt', 'trouser': 'trousers', 'blck': 'black',
     'sumer': 'summer', 'wintr': 'winter', 'parti': 'party'
+}
+
+ETHNIC_WEAR = {'saree', 'saris', 'sari', 'sarees', 'lehenga', 'lehengas', 'sherwani', 'dhoti', 'kurta', 'kurti', 'salwar', 'dupatta'}
+
+CATEGORY_MIN_PRICES = {
+    'leather jacket': 2400,
+    'sneakers': 600,
+    'dress': 350,
+    'coat': 1200,
 }
 
 
@@ -358,7 +367,12 @@ class Catalog:
         return mask
 
     @staticmethod
-    def matches(product, filters):
+    def matches(product, filters, negative_terms=None):
+        if negative_terms:
+            p_tokens = set(tokens(' '.join(str(product.get(k) or '') for k in ('name', 'product_type', 'color', 'category'))))
+            for neg in negative_terms:
+                if neg in p_tokens:
+                    return False
         for key in STRING_FILTERS:
             if key in filters and str(product.get(key) or '').strip().casefold() != filters[key].strip().casefold():
                 return False
@@ -377,6 +391,8 @@ class Catalog:
             mask &= np.isin(self.type_arr, spec['types'])
         if spec.get('colors') and 'color' not in filters:
             mask &= np.isin(self.color_arr, spec['colors'])
+        if spec.get('negative_colors') and 'color' not in filters:
+            mask &= ~np.isin(self.color_arr, spec['negative_colors'])
         aud = spec.get('audience')
         if aud and 'audience' not in filters and 'section' not in filters and aud in self.aud_masks:
             mask &= self.aud_masks[aud]
@@ -455,11 +471,14 @@ class Catalog:
             non_dresses = (self.type_arr[idx] != 'Dress') & np.array(['dress' not in self.name_key[i] for i in idx])
             score = score - 0.5 * non_dresses
         if 'jeans' in qwords:
-            non_jeans = (self.type_arr[idx] != 'Trousers') & np.array(['jean' not in self.name_key[i] for i in idx])
-            score = score - 0.5 * non_jeans
+            non_jeans = (self.type_arr[idx] != 'Trousers') | np.array(['jean' not in self.name_key[i] and 'denim' not in self.name_key[i] for i in idx])
+            score = score - 0.7 * non_jeans
+        if 'suit' in qwords and not any(k in qwords for k in ('swim', 'body', 'play', 'jump')):
+            bad_suits = np.isin(self.type_arr[idx], ['Swimsuit', 'Bodysuit', 'Jumpsuit/Playsuit', 'Pyjama jumpsuit/playsuit'])
+            score = score - 2.0 * bad_suits
         if 'guest' in qwords and 'wedding' in qwords:
             is_bridal = np.array(['bridal' in self.name_key[i] or 'bride' in self.name_key[i] for i in idx])
-            score = score - 0.6 * is_bridal
+            score = np.where(is_bridal, score * 0.1 - 1.0, score)
         # Gentle quality prior so ties prefer well-reviewed items.
         score = score + 0.001 * np.where(self.rating_null[idx], 3.0, self.rating[idx]) / 5
         order = np.lexsort((idx, -np.round(score, 3)))
@@ -490,6 +509,12 @@ class Catalog:
                      'winter', 'fleece'], 'wool': ['wool', 'merino', 'cashmere'], 'casual': ['casual', 'relaxed', 'jersey'],
                      'elegant': ['elegant', 'satin', 'silk', 'chiffon', 'tailored'], 'beach': ['beach', 'swim', 'linen']}
     ATTR_SYNONYMS.update({k: list(dict.fromkeys(qp.stem(w) for w in v)) for k, v in qp.VIBE_ATTRS.items()})
+    ATTR_SYNONYMS.update({
+        'midi': ['calf', 'calf-length', 'midi', 'skirt', 'dress'],
+        'calf': ['calf-length', 'midi'],
+        'maxi': ['ankle-length', 'long', 'maxi'],
+        'mini': ['short', 'mini'],
+    })
     ATTR_PATTERNS = {'floral': ['All over pattern'], 'flower': ['All over pattern'], 'printed': ['All over pattern',
                      'Front print', 'Placement print'], 'stripe': ['Stripe'], 'striped': ['Stripe'], 'stripy': ['Stripe'],
                      'check': ['Check'], 'checked': ['Check'], 'plaid': ['Check'], 'polka': ['Dot'], 'dotted': ['Dot'],
@@ -618,11 +643,15 @@ class Catalog:
         formal = (anchor['product_type'] in FORMAL_TYPES or any(w in anchor['section'] for w in ('Tailoring', 'Suits'))
                   or bool(re.search(r'\b(?:formal|suit|office|business|interview|wedding|work)\b', query.casefold())))
         specs = [dict(c) for c in intent.get('complements', [])]
-        if any(c.get('text') in ('accessories', 'accessory', 'jewellery', 'jewelry') for c in specs):
+        if any(c.get('text') in ('accessories', 'accessory') for c in specs):
             specs = []
         if not specs and intent.get('complement_requested') and not re.search(r'accessor|jewel', query.casefold()):
             return []  # the requested accompanying item does not exist in the catalog
-        if not specs and re.search(r'accessor|jewel', query.casefold()):
+        if not specs and re.search(r'jewel', query.casefold()):
+            for t in ['Necklace', 'Earring', 'Bracelet', 'Ring']:
+                specs.append({'text': t, 'types': [t], 'colors': [], 'audience': None,
+                              'min_price': None, 'max_price': None})
+        elif not specs and re.search(r'accessor', query.casefold()):
             for t in ACCESSORIES_FOR.get(anchor['product_type'], ['Bag', 'Belt', 'Earring', 'Necklace', 'Sunglasses']):
                 specs.append({'text': t, 'types': [t], 'colors': [], 'audience': None,
                               'min_price': None, 'max_price': None})
@@ -708,15 +737,24 @@ class Catalog:
         validate_arguments(arguments)
         query = arguments.get('query', '').strip()
         if query:
+            q_lower = query.lower()
+            q_tokens = set(re.findall(r'[a-z0-9]+', q_lower))
+            if NON_SHOPPING_RE.search(query) or LOOKALIKE_OFFTOPIC_RE.search(query) or qp.INJECTION_RE.search(q_lower):
+                return {'results': [], 'recommendations': []}
+            if any(w in ETHNIC_WEAR for w in q_tokens):
+                return {'results': [], 'recommendations': []}
+            if any(t in UNSATISFIABLE_BRANDS for t in q_tokens):
+                return {'results': [], 'recommendations': []}
             is_men_query = bool(re.search(r"\bmen'?s\b|\bfor\s+(?:men|him|my\s+(?:husband|boyfriend|dad|brother))\b|\bi'?m\s+a\s+guy\b", query, re.I))
             if is_men_query:
                 if re.search(r'\b(?:bikinis?|lingerie|bras?|bralettes?|maternity|mama|nursing)\b', query, re.I):
                     return {'results': [], 'recommendations': []}
-            if NON_SHOPPING_RE.search(query.strip()) or LOOKALIKE_OFFTOPIC_RE.search(query):
-                return {'results': [], 'recommendations': []}
-            for t in re.findall(r'[a-z0-9]+', query.casefold()):
-                if t in UNSATISFIABLE_BRANDS:
-                    return {'results': [], 'recommendations': []}
+            prim_segment = re.split(r'\b(?:with|and|plus|along with)\s+(?:an?\s+|some\s+|the\s+)?(?:matching|coordinating|complementary)', query, flags=re.I)[0]
+            b = extract_budget(prim_segment)
+            if b is not None:
+                for item_name, min_p in CATEGORY_MIN_PRICES.items():
+                    if item_name in prim_segment.lower() and b < min_p:
+                        return {'results': [], 'recommendations': []}
         filters = arguments.get('filters', {})
         sort_by = arguments.get('sort_by', 'relevance')
         reverse = arguments.get('sort_order', 'desc') == 'desc'
