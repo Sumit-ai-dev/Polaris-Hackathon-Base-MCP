@@ -117,7 +117,7 @@ TYPE_WORDS = {
     'plush': ['Soft Toys'], 'toy': ['Soft Toys', 'Toy'], 'water bottle': ['Waterbottle'], 'bottle': ['Waterbottle'],
     'sleeping bag': ['Sleeping sack', 'Sleep Bag'], 'sleeping sack': ['Sleeping sack'], 'bib': ['Baby Bib'],
     'leg warmer': ['Leg warmers'], 'long john': ['Long John'], 'thermal': ['Long John'],
-    'brace': ['Braces'], 'suspender': ['Braces'], 'phone case': ['Mobile case'], 'mobile case': ['Mobile case'],
+    'brace': ['Braces'], 'suspender': ['Braces'], 'phone case': ['Mobile case', 'Other accessories'], 'mobile case': ['Mobile case', 'Other accessories'],
     'keychain': ['Keychain'], 'cosmetic': ['Fine cosmetics', 'Chem. cosmetics'], 'makeup': ['Fine cosmetics'],
     'lipstick': ['Fine cosmetics'], 'nail polish': ['Fine cosmetics'], 'dog': ['Dog Wear', 'Dog wear'],
     'side table': ['Side table'], 'cushion': ['Cushion'], 'blanket': ['Blanket'], 'towel': ['Towel'],
@@ -223,6 +223,10 @@ def parse_prices(text):
     if m and hi is None:
         hi = _num(m.group(1), m.group(2))
         t = t[:m.start()] + ' ' + t[m.end():]
+    m_trail = re.search(r'(?:rs\.?|inr|₹)?\s*(\d[\d,]*)\s*(k)?\s*(?:rs\.?|inr|₹|rupees?|/-)?\s*(?:max|maximum|or less|or under|se kam|ke andar)\b', t, re.I)
+    if m_trail and hi is None:
+        hi = _num(m_trail.group(1), m_trail.group(2))
+        t = t[:m_trail.start()] + ' ' + t[m_trail.end():]
     m = MIN_RE.search(t)
     if m and lo is None and re.search(r'\d', m.group(0)):
         # "from 500" alone is ambiguous with ranges; only accept when it looks like a price.

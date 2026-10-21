@@ -135,6 +135,13 @@ def extract_budget(text):
             return float(m.group(1).replace(',', ''))
         except ValueError:
             pass
+    m_trail = re.search(r'(?:inr|rs\.?|₹)?\s*(\d[\d,]*)\s*(k)?\s*(?:inr|rs\.?|₹|rupees?|/-)?\s*(?:max|maximum|or less|or under|se\s+kam|ke\s+andar)\b', str(text), re.I)
+    if m_trail:
+        try:
+            val = float(m_trail.group(1).replace(',', ''))
+            return val * 1000.0 if m_trail.group(2) else val
+        except ValueError:
+            pass
     return None
 
 
@@ -722,6 +729,9 @@ class Catalog:
             sec = self.section_arr[idx]
             score = score + 0.08 * np.array(['Tailoring' in x or 'Suits' in x for x in sec])
             score = score - 0.15 * ((self.pattern_arr[idx] == 'Denim') | np.array(['Denim' in x for x in sec]))
+        if 'bag' in anchor['product_type'].lower() or any('bag' in t.lower() for t in spec.get('types', [])):
+            is_utility = np.array([any(w in self.name_key[i] for w in ('gym', 'backpack', 'mesh', 'bumbag', 'bum', 'waist')) for i in idx])
+            score = score - 0.5 * is_utility
         score = score + 0.02 * np.where(self.rating_null[idx], 3.0, self.rating[idx]) / 5
         order = idx[np.lexsort((idx, -score))]
         out, names = [], set()
